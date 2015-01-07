@@ -78,14 +78,15 @@ angular.module('angular-carousel')
     replace: true,
     scope: {
       items: '=',
-      index: '='
+      index: '=',
+      loop: '='
     },
     link: function(scope, element, attrs) {
       scope.prev = function() {
-        if (scope.index > 0) scope.index--;
+        scope.index = !scope.index ? scope.items.length : scope.index - 1;
       };
       scope.next = function() {
-        if (scope.index < scope.items.length-1) scope.index++;
+        scope.index = (scope.index + 1) % scope.items.length;
       };
     },
     templateUrl: 'carousel-controls.html'
@@ -95,8 +96,8 @@ angular.module('angular-carousel')
 angular.module('angular-carousel').run(['$templateCache', function($templateCache) {
   $templateCache.put('carousel-controls.html',
     '<div class="rn-carousel-controls">\n' +
-    '  <span class="rn-carousel-control rn-carousel-control-prev" ng-click="prev()" ng-if="index > 0"></span>\n' +
-    '  <span class="rn-carousel-control rn-carousel-control-next" ng-click="next()" ng-if="index < items.length - 1"></span>\n' +
+    '  <span class="rn-carousel-control rn-carousel-control-prev" ng-click="prev()" ng-if="items.length > 1 && (index > 0  || loop)"></span>\n' +
+    '  <span class="rn-carousel-control rn-carousel-control-next" ng-click="next()" ng-if="items.length > 1 && (index < items.length - 1 || loop)"></span>\n' +
     '</div>'
   );
 }]);
@@ -149,12 +150,14 @@ angular.module('angular-carousel').run(['$templateCache', function($templateCach
                     isBuffered = false,
                     slidesCount = 0,
                     isIndexBound = false,
+                    loop = angular.isDefined(tAttributes['rnCarouselLoop']),
                     repeatItem,
                     repeatCollection;
 
                 // add CSS classes
                 tElement.addClass('rn-carousel-slides');
                 tElement.children().addClass('rn-carousel-slide');
+
 
                 // try to find an ngRepeat expression
                 // at this point, the attributes are not yet normalized so we need to try various syntax
@@ -187,6 +190,7 @@ angular.module('angular-carousel').run(['$templateCache', function($templateCach
                 return function(scope, iElement, iAttributes, containerCtrl) {
 
                     carouselId++;
+                    scope.loop = loop;
 
                     var containerWidth,
                         transformProperty,
@@ -234,7 +238,7 @@ angular.module('angular-carousel').run(['$templateCache', function($templateCach
 
                     // enable carousel controls
                     if (angular.isDefined(iAttributes.rnCarouselControl)) {
-                        var controls = $compile("<div id='carousel-" + carouselId +"-controls' index='indicatorIndex' items='carouselIndicatorArray' rn-carousel-controls class='rn-carousel-controls'></div>")(scope);
+                        var controls = $compile("<div id='carousel-" + carouselId +"-controls' index='indicatorIndex' loop=" + loop + " items='carouselIndicatorArray' rn-carousel-controls class='rn-carousel-controls'></div>")(scope);
                         container.append(controls);
                     }
 
